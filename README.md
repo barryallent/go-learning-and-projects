@@ -37,7 +37,6 @@ cd learning/01-variables && go run main.go
 ## 📖 Documentation
 
 - [Learning Path](docs/learning-path.md)
-- [Microservices Guide](docs/microservices-guide.md)
 
 ## 🎯 Learning Path
 
