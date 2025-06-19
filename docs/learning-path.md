@@ -81,9 +81,28 @@ This learning path takes you from Go basics to advanced concepts, with each modu
 4. Move to the next module only after understanding the current one
 5. Build small projects combining multiple concepts
 
+## 💻 Running Go Files
+
+To run a Go file, use the following command:
+
+```bash
+go run filename.go
+```
+
+For example:
+- `go run 01-variables/main.go`
+- `go run 02-fmt/main.go`
+- `go run 03-booleans/main.go`
+
+You can also run multiple files at once:
+```bash
+go run file1.go file2.go
+```
+
 ## 💡 Tips
 
 - Read the comments in each file
 - Modify the code to experiment
 - Use `go fmt` to format your code
 - Use `go vet` to check for issues
+- Use `go run` to execute your Go programs
