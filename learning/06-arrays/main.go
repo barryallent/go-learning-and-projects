@@ -24,7 +24,7 @@ func main() {
 	//append returns new array and we assign it to slice
 	namesSlices = append(namesSlices, "tony")
 
-	fmt.Println(namesSlices[3])
+	fmt.Println(namesSlices, namesSlices[3])
 	
 
 	// arr[x:y ] get slice from x to y

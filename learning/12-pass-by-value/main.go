@@ -46,6 +46,20 @@ func main() {
 	fmt.Println("Original array:", array)
 	modifyArray(array)
 	fmt.Println("After modifyArray:", array) // Array unchanged
+
+
+	//pass by value with struct
+	u := user{name: "initial name"} 
+    u.changeName("changed name")
+	// Output: initial name so didn't change
+    fmt.Println(u.name) 
+
+	//pass by reference with struct
+	//Java: Always passes objects by reference, so no need to write *
+	newu := user{name: "initial name"}
+    newu.changeNamePointer("changed name")
+	// Output: changed name so changed!
+    fmt.Println(newu.name) 
 }
 
 func modifySlice(s []int) {
@@ -56,4 +70,17 @@ func modifySlice(s []int) {
 func modifyArray(a [3]int) {
 	a[0] = 100
 	fmt.Println("Inside modifyArray:", a)
+}
+
+
+type user struct {
+    name string
+}
+
+func (u user) changeName(newName string) {
+    u.name = newName
+}
+
+func (u *user) changeNamePointer(newName string) {
+    u.name = newName
 }
