@@ -14,7 +14,7 @@ type Hello struct {
 // This is similar to a constructor in other languages
 // In Go, we typically use a function to create and return a new instance of a struct
 func NewHello(l *log.Logger) *Hello {
-	return &Hello{l}
+	return &Hello{log:l}
 }
 
 func (h *Hello) ServeHTTP(w http.ResponseWriter, r *http.Request) {
