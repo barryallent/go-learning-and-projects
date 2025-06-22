@@ -29,5 +29,5 @@ func (h *Hello) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error reading request body", http.StatusBadRequest)
 		return
 	}
-	w.Write(data)
+	w.Write([]byte("hello " + string(data)))
 }
