@@ -17,6 +17,7 @@ func NewHello(l *log.Logger) *Hello {
 	return &Hello{log:l}
 }
 
+// ServeHTTP is the method that will be called when a request is made to the handler
 func (h *Hello) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Log the request

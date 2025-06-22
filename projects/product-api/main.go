@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"projects/handlers"
+	"product-api/handlers"
 	"time"
 )
 
@@ -15,8 +15,7 @@ func main() {
 	l := log.New(os.Stdout, "hello-api ", log.LstdFlags)
 	
 	// Initialize handler instances with the logger
-	hh := handlers.NewHello(l)
-	gh := handlers.NewGoodbye(l)
+	hh := handlers.NewProducts(l)
 
 	// Create a new router (ServeMux) to map URLs to handlers
 	// ServeHTTP function of each handler will be called when the URL matches
@@ -24,7 +23,6 @@ func main() {
 	// and gh.ServeHTTP will be called for requests to "/goodbye"
 	sm := http.NewServeMux()
 	sm.Handle("/", hh)          // Maps "/" to Hello handler
-	sm.Handle("/goodbye", gh)   // Maps "/goodbye" to Goodbye handler
 
 	// Define the custom HTTP server configuration
 	s := &http.Server{
