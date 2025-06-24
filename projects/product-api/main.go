@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
@@ -13,16 +14,26 @@ import (
 func main() {
 	// Create a logger that writes to stdout with a prefix and timestamp
 	l := log.New(os.Stdout, "hello-api ", log.LstdFlags)
-	
+
 	// Initialize handler instances with the logger
-	hh := handlers.NewProducts(l)
+	ph := handlers.NewProducts(l)
 
 	// Create a new router (ServeMux) to map URLs to handlers
 	// ServeHTTP function of each handler will be called when the URL matches
 	// For example, hh.ServeHTTP will be called for requests to "/"
 	// and gh.ServeHTTP will be called for requests to "/goodbye"
-	sm := http.NewServeMux()
-	sm.Handle("/", hh)          // Maps "/" to Hello handler
+	sm := mux.NewRouter()
+
+	getRouter := sm.Methods("GET").Subrouter()
+	getRouter.HandleFunc("/", ph.GetProducts)
+
+	putRouter := sm.Methods("PUT").Subrouter()
+	putRouter.HandleFunc("/product/{id:[0-9]+}", ph.UpdateProducts)
+
+	postRouter := sm.Methods("POST").Subrouter()
+	postRouter.HandleFunc("/product", ph.AddProduct)
+
+	//sm.Handle("/", hh) // Maps "/" to Hello handler
 
 	// Define the custom HTTP server configuration
 	s := &http.Server{
