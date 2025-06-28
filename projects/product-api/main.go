@@ -16,18 +16,20 @@ func main() {
 	l := log.New(os.Stdout, "hello-api ", log.LstdFlags)
 
 	// Initialize handler instances with the logger
-	ph := handlers.NewProducts(l)
+	ph := handlers.NewProductsHandler(l)
 
-	// Create a new router (ServeMux) to map URLs to handlers
-	// ServeHTTP function of each handler will be called when the URL matches
-	// For example, hh.ServeHTTP will be called for requests to "/"
-	// and gh.ServeHTTP will be called for requests to "/goodbye"
+	// using gorilla/mux for routing, its a powerful HTTP router and URL matcher for building Go web servers
 	sm := mux.NewRouter()
 
-	getRouter := sm.Methods("GET").Subrouter()
+	// using gorilla/mux, we can create subrouters for different HTTP methods
+	getRouter := sm.Methods(http.MethodGet).Subrouter()
+
+	// we are not passing any params when calling the GetProducts method
+	// because handleFunc expects a function with the signature(w http.ResponseWriter, r *http.Request)
+	// and GetProducts matches that signature
 	getRouter.HandleFunc("/", ph.GetProducts)
 
-	putRouter := sm.Methods("PUT").Subrouter()
+	putRouter := sm.Methods(http.MethodPut).Subrouter()
 	putRouter.HandleFunc("/product/{id:[0-9]+}", ph.UpdateProducts)
 
 	postRouter := sm.Methods("POST").Subrouter()

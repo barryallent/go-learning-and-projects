@@ -10,7 +10,7 @@ func main() {
 	greetings("Barry")
 
 	names := []string{"barry", "tony", "bruce"}
-	
+
 	cycleNames(names, greetings)
 	cycleNames(names, greetingsBye)
 
@@ -27,29 +27,28 @@ func main() {
 	fmt.Println(name11, name22)
 }
 
-
 func greetings(name string) {
 	fmt.Println("Hello", name)
 }
 
 func greetingsBye(name string) {
 	fmt.Println("Bye", name)
-} 
+}
 
-
-//passing func as argument to function, function expects a single string param so we can pass that type of function only
+// passing func as argument to function, function expects a single string param so we can pass that type of function only
 func cycleNames(names []string, f func(string)) {
-	for i:=0; i < len(names); i++ {
+	for i := 0; i < len(names); i++ {
 		f(names[i])
 	}
 }
 
-
+// syntax for function with return type
+// func nameOfFunction(paramType) returnType
 func areaCircle(r float32) float32 {
-	return math.Pi * r * r 
+	return math.Pi * r * r
 }
 
-//function with multiple return types
+// function with multiple return types
 func separateInitials(s string) (string, string) {
 
 	//convert a string to string array
@@ -62,6 +61,5 @@ func separateInitials(s string) (string, string) {
 	} else {
 		return string(names[0][:1]), "_"
 	}
-	
-	
+
 }
