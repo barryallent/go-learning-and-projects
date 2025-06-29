@@ -31,9 +31,11 @@ func main() {
 
 	putRouter := sm.Methods(http.MethodPut).Subrouter()
 	putRouter.HandleFunc("/product/{id:[0-9]+}", ph.UpdateProducts)
+	putRouter.Use(ph.MiddlewareProductValidation)
 
 	postRouter := sm.Methods("POST").Subrouter()
 	postRouter.HandleFunc("/product", ph.AddProduct)
+	postRouter.Use(ph.MiddlewareProductValidation)
 
 	//sm.Handle("/", hh) // Maps "/" to Hello handler
 

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -35,15 +36,8 @@ func (p *ProductsHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 func (p *ProductsHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle POST Products")
 
-	// data.Product is a struct that we defined in the data package
-	product := &data.Product{}
-
-	// get the product data from the request body and unmarshal it into the product struct
-	err := product.FromJSON(r.Body)
-	if err != nil {
-		http.Error(w, "Unable to unmarshal json", http.StatusBadRequest)
-		return
-	}
+	// Get the product from the context, which was set by the MiddlewareProductValidation
+	product := r.Context().Value(KeyProduct{}).(*data.Product)
 
 	// add the product to the data store
 	data.AddProduct(product)
@@ -61,27 +55,51 @@ func (p *ProductsHandler) UpdateProducts(w http.ResponseWriter, r *http.Request)
 		http.Error(w, "Unable to convert id to int", http.StatusBadRequest)
 		return
 	}
-	// Create a new Product instance to hold the data from the request body
-	product := &data.Product{}
 
-	// Use the FromJSON method to populate the product instance from the request body
-	err = product.FromJSON(r.Body)
-
-	if err != nil {
-		http.Error(w, "Unable to unmarshal json", http.StatusBadRequest)
-	}
+	// Get the product from the context, which was set by the MiddlewareProductValidation
+	product := r.Context().Value(KeyProduct{}).(*data.Product)
 
 	// Call the UpdateProduct method from the data package to update the product
-	error := data.UpdateProduct(id, product)
+	err = data.UpdateProduct(id, product)
 
 	// Check if the product was not found or if there was another error
-	if error == data.ErrProductNotFound {
+	if err == data.ErrProductNotFound {
 		http.Error(w, "product not found", http.StatusNotFound)
 		return
 	}
 
-	if error != nil {
+	if err != nil {
 		http.Error(w, "Unable to update product", http.StatusInternalServerError)
 		return
 	}
+}
+
+type KeyProduct struct{}
+
+// MiddlewareProductValidation to validate the product data before processing the request and passing it to the next handler
+func (p *ProductsHandler) MiddlewareProductValidation(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p.l.Println("Product validation middleware")
+
+		//like doing this in java, Product p = new Product()
+		product := &data.Product{}
+
+		//get the product from the request body
+		err := product.FromJSON(r.Body)
+
+		if err != nil {
+			http.Error(w, "Unable to unmarshal json", http.StatusBadRequest)
+			return
+		}
+
+		// Create a new context with the product and add it to the request so it can be accessed by the next handler
+		//passing pointer to product
+		ctx := context.WithValue(r.Context(), KeyProduct{}, product)
+
+		// Update the request with the new context
+		r = r.WithContext(ctx)
+
+		// Call the next handler in the chain
+		next.ServeHTTP(w, r)
+	})
 }
