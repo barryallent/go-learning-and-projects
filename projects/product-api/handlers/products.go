@@ -3,11 +3,12 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"product-api/data"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type ProductsHandler struct {
@@ -25,10 +26,14 @@ func NewProductsHandler(l *log.Logger) *ProductsHandler {
 func (p *ProductsHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 
 	// get all products from the data package
-	Products := data.GetProducts()
+	Products, err := data.GetProducts()
+	if err != nil {
+		http.Error(w, "Unable to retrieve products", http.StatusInternalServerError)
+		return
+	}
 
 	// call the ToJSON method on Products to convert it to JSON
-	err := Products.ToJSON(w)
+	err = Products.ToJSON(w)
 	if err != nil {
 		http.Error(w, "Unable to marshal json", http.StatusInternalServerError)
 	}
@@ -41,7 +46,11 @@ func (p *ProductsHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	product := r.Context().Value(KeyProduct{}).(*data.Product)
 
 	// add the product to the data store
-	data.AddProduct(product)
+	err := data.AddProduct(product)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Unable to add product, err:", err), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (p *ProductsHandler) UpdateProducts(w http.ResponseWriter, r *http.Request) {
