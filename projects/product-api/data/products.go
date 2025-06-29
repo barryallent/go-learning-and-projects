@@ -3,19 +3,43 @@ package data
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-playground/validator"
 	"io"
+	"regexp"
 	"time"
 )
 
 type Product struct {
 	ID          int     `json:"id"` //this is to show as id in JSON not as ID
-	Name        string  `json:"name"`
+	Name        string  `json:"name" validate:"required"`
 	Description string  `json:"description"`
-	Price       float64 `json:"price"`
-	SKU         string  `json:"sku"`
-	CreatedAt   string  `json:"-"` // `json:"-"` means this field will not be included in the JSON output
+	Price       float64 `json:"price" validate:"required,gte=0"` // gte=0 means greater than or equal to 0
+	SKU         string  `json:"sku" validate:"required,sku"`     // sku is a custom validation tag
+	CreatedAt   string  `json:"-"`                               // `json:"-"` means this field will not be included in the JSON output
 	UpdatedAt   string  `json:"-"`
 	DeletedAt   string  `json:"-"`
+}
+
+// func to validate the Product struct
+func (p *Product) ValidateProduct() error {
+
+	// Create a new validator instance
+	validate := validator.New()
+
+	//register a custom validation function for the SKU field
+	err := validate.RegisterValidation("sku", validateSKU)
+	if err != nil {
+		return err
+	}
+	return validate.Struct(p)
+}
+
+// custom validation function for SKU field
+// use validator.FieldLevel interface to access the field being validated
+func validateSKU(fl validator.FieldLevel) bool {
+	//sku is of the form SKU-1234
+	re := regexp.MustCompile("^SKU-[0-9]+$")
+	return re.MatchString(fl.Field().String())
 }
 
 type Products []*Product

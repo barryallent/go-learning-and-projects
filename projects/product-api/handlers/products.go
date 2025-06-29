@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -89,6 +90,13 @@ func (p *ProductsHandler) MiddlewareProductValidation(next http.Handler) http.Ha
 
 		if err != nil {
 			http.Error(w, "Unable to unmarshal json", http.StatusBadRequest)
+			return
+		}
+
+		// Validate the product struct using the ValidateProduct method that we defined in the data package
+		err = product.ValidateProduct()
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Error Validating product: %s", err), http.StatusBadRequest)
 			return
 		}
 
