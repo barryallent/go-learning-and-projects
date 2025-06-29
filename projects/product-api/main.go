@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/go-openapi/runtime/middleware"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
@@ -12,8 +14,6 @@ import (
 	"product-api/database"
 	"product-api/handlers"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -69,6 +69,12 @@ func main() {
 	postRouter := sm.Methods("POST").Subrouter()
 	postRouter.HandleFunc("/product", ph.AddProduct)
 	postRouter.Use(ph.MiddlewareProductValidation)
+
+	// Swagger documentation
+	opts := middleware.RedocOpts{SpecURL: "/swagger.yaml"}
+	sh := middleware.Redoc(opts, nil)
+	sm.Handle("/docs", sh)
+	sm.Handle("/swagger.yaml", http.FileServer(http.Dir("./")))
 
 	//sm.Handle("/", hh) // Maps "/" to Hello handler
 

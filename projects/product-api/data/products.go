@@ -4,13 +4,18 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/go-playground/validator"
 	"io"
 	"regexp"
-
-	"github.com/go-playground/validator"
 )
 
+// swagger:model
+
 type Product struct {
+
+	// the id of this user
+	// required: true
+	// min: 1
 	ID          int     `json:"id" db:"id"`
 	Name        string  `json:"name" db:"name" validate:"required"`
 	Description string  `json:"description" db:"description"`

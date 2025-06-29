@@ -1,3 +1,18 @@
+// Package classification of Products API
+//
+// Documentation for Products API
+//
+// Schemes: http
+// BasePath: /
+// Version: 1.0.0
+//
+// Consumes:
+// - application/json
+//
+// Produces:
+// - application/json
+// swagger:meta
+
 package handlers
 
 import (
@@ -7,10 +22,12 @@ import (
 	"net/http"
 	"product-api/data"
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
 
+// ProductsHandler handles product-related HTTP requests
 type ProductsHandler struct {
 	l *log.Logger
 }
@@ -20,9 +37,13 @@ func NewProductsHandler(l *log.Logger) *ProductsHandler {
 	return &ProductsHandler{l: l}
 }
 
-// GetProducts p is a receiver, it is like this in java
-// we need to add a receiver to the method so that it can be called on the ProductsHandler struct,
-// otherwise we won't be able to call it on the ProductsHandler instance
+// swagger:route GET / products listProducts
+// Gets all products from the database
+// responses:
+//	200: productsResponse
+//  500: errorResponse
+
+// GetProducts returns all products
 func (p *ProductsHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 
 	// get all products from the data package
@@ -39,6 +60,15 @@ func (p *ProductsHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// swagger:route POST /product products createProduct
+// Creates a new product
+// responses:
+//	201: productResponse
+//  400: errorResponse
+//  409: errorResponse
+//  500: errorResponse
+
+// AddProduct adds a new product to the database
 func (p *ProductsHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle POST Products")
 
@@ -48,11 +78,26 @@ func (p *ProductsHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	// add the product to the data store
 	err := data.AddProduct(product)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Unable to add product, err:", err), http.StatusInternalServerError)
+		// Check for duplicate SKU error
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			http.Error(w, fmt.Sprintf("Product with SKU '%s' already exists", product.SKU), http.StatusConflict)
+			return
+		}
+		http.Error(w, fmt.Sprintf("Unable to add product: %v", err), http.StatusInternalServerError)
 		return
 	}
 }
 
+// swagger:route PUT /product/{id} products updateProduct
+// Updates a product
+// responses:
+//	200: productResponse
+//  400: errorResponse
+//  404: errorResponse
+//  409: errorResponse
+//  500: errorResponse
+
+// UpdateProducts updates an existing product
 func (p *ProductsHandler) UpdateProducts(w http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle PUT Products")
 
@@ -79,11 +124,17 @@ func (p *ProductsHandler) UpdateProducts(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err != nil {
-		http.Error(w, "Unable to update product", http.StatusInternalServerError)
+		// Check for duplicate SKU error
+		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			http.Error(w, fmt.Sprintf("Product with SKU '%s' already exists", product.SKU), http.StatusConflict)
+			return
+		}
+		http.Error(w, fmt.Sprintf("Unable to update product: %v", err), http.StatusInternalServerError)
 		return
 	}
 }
 
+// KeyProduct is used as a key for storing products in request context
 type KeyProduct struct{}
 
 // MiddlewareProductValidation to validate the product data before processing the request and passing it to the next handler
@@ -119,4 +170,46 @@ func (p *ProductsHandler) MiddlewareProductValidation(next http.Handler) http.Ha
 		// Call the next handler in the chain
 		next.ServeHTTP(w, r)
 	})
+}
+
+// swagger:parameters createProduct updateProduct
+type productParamsWrapper struct {
+	// Product data
+	// in: body
+	// required: true
+	Body data.Product
+}
+
+// swagger:parameters updateProduct
+type productIDParamsWrapper struct {
+	// Product ID
+	// in: path
+	// required: true
+	ID int `json:"id"`
+}
+
+// A list of products
+// swagger:response productsResponse
+type productsResponseWrapper struct {
+	// All products
+	// in: body
+	Body []data.Product
+}
+
+// A single product
+// swagger:response productResponse
+type productResponseWrapper struct {
+	// Product data
+	// in: body
+	Body data.Product
+}
+
+// Error response
+// swagger:response errorResponse
+type errorResponseWrapper struct {
+	// Error message
+	// in: body
+	Body struct {
+		Message string `json:"message"`
+	}
 }

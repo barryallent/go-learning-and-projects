@@ -1,0 +1,112 @@
+definitions:
+    Product:
+        properties:
+            description:
+                type: string
+                x-go-name: Description
+            id:
+                description: the id of this user
+                format: int64
+                minimum: 1
+                type: integer
+                x-go-name: ID
+            name:
+                type: string
+                x-go-name: Name
+            price:
+                format: double
+                type: number
+                x-go-name: Price
+            sku:
+                type: string
+                x-go-name: SKU
+        required:
+            - id
+        type: object
+        x-go-package: product-api/data
+info: {}
+paths:
+    /:
+        get:
+            description: Gets all products from the database
+            operationId: listProducts
+            responses:
+                "200":
+                    $ref: '#/responses/productsResponse'
+                "500":
+                    $ref: '#/responses/errorResponse'
+            tags:
+                - products
+    /product:
+        post:
+            description: Creates a new product
+            operationId: createProduct
+            parameters:
+                - description: Product data
+                  in: body
+                  name: Body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/Product'
+            responses:
+                "201":
+                    $ref: '#/responses/productResponse'
+                "400":
+                    $ref: '#/responses/errorResponse'
+                "409":
+                    $ref: '#/responses/errorResponse'
+                "500":
+                    $ref: '#/responses/errorResponse'
+            tags:
+                - products
+    /product/{id}:
+        put:
+            description: Updates a product
+            operationId: updateProduct
+            parameters:
+                - description: Product data
+                  in: body
+                  name: Body
+                  required: true
+                  schema:
+                    $ref: '#/definitions/Product'
+                - description: Product ID
+                  format: int64
+                  in: path
+                  name: id
+                  required: true
+                  type: integer
+                  x-go-name: ID
+            responses:
+                "200":
+                    $ref: '#/responses/productResponse'
+                "400":
+                    $ref: '#/responses/errorResponse'
+                "404":
+                    $ref: '#/responses/errorResponse'
+                "409":
+                    $ref: '#/responses/errorResponse'
+                "500":
+                    $ref: '#/responses/errorResponse'
+            tags:
+                - products
+responses:
+    errorResponse:
+        description: Error response
+        schema:
+            properties:
+                message:
+                    type: string
+                    x-go-name: Message
+            type: object
+    productResponse:
+        description: A single product
+        schema:
+            $ref: '#/definitions/Product'
+    productsResponse:
+        description: A list of products
+        schema:
+            items:
+                $ref: '#/definitions/Product'
+            type: array
+swagger: "2.0"
