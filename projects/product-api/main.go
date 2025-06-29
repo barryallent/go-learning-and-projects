@@ -2,18 +2,51 @@ package main
 
 import (
 	"context"
-	"github.com/gorilla/mux"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"product-api/config"
+	"product-api/data"
+	"product-api/database"
 	"product-api/handlers"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
 	// Create a logger that writes to stdout with a prefix and timestamp
-	l := log.New(os.Stdout, "hello-api ", log.LstdFlags)
+	l := log.New(os.Stdout, "product-api ", log.LstdFlags)
+
+	// Load configuration
+	cfg := config.LoadConfig()
+
+	// Convert config to database config format
+	dbConfig := database.Config{
+		Host:     cfg.DatabaseConfig.Host,
+		Port:     cfg.DatabaseConfig.Port,
+		User:     cfg.DatabaseConfig.User,
+		Password: cfg.DatabaseConfig.Password,
+		DBName:   cfg.DatabaseConfig.DBName,
+		SSLMode:  cfg.DatabaseConfig.SSLMode,
+	}
+
+	// Initialize database connection
+	db, err := database.NewConnection(dbConfig)
+	if err != nil {
+		l.Fatal("Failed to connect to database: ", err)
+	}
+	defer db.Close()
+
+	// Create tables
+	if err := db.CreateTables(); err != nil {
+		l.Fatal("Failed to create tables: ", err)
+	}
+
+	// Initialize the product repository
+	data.InitializeRepository(db.DB)
 
 	// Initialize handler instances with the logger
 	ph := handlers.NewProductsHandler(l)
@@ -40,8 +73,9 @@ func main() {
 	//sm.Handle("/", hh) // Maps "/" to Hello handler
 
 	// Define the custom HTTP server configuration
+	serverAddr := fmt.Sprintf(":%d", cfg.ServerConfig.Port)
 	s := &http.Server{
-		Addr:         ":9080",           // Server will listen on port 9080
+		Addr:         serverAddr,        // Server will listen on configured port
 		Handler:      sm,                // Use our custom router
 		IdleTimeout:  120 * time.Second, // Max idle time before disconnect
 		ReadTimeout:  1 * time.Second,   // Max time to read a request
