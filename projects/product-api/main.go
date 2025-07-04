@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/go-openapi/runtime/middleware"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +12,11 @@ import (
 	"product-api/database"
 	"product-api/handlers"
 	"time"
+
+	gohandlers "github.com/gorilla/handlers"
+
+	"github.com/go-openapi/runtime/middleware"
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -76,13 +79,22 @@ func main() {
 	sm.Handle("/docs", sh)
 	sm.Handle("/swagger.yaml", http.FileServer(http.Dir("./")))
 
+	//CORS middleware to allow cross-origin requests from browsers
+	ch := gohandlers.CORS(
+		// allow all origins, methods, and headers
+		gohandlers.AllowedOrigins([]string{"*"}),
+		gohandlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		//allowed 2 headers for requests
+		gohandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+	)
+
 	//sm.Handle("/", hh) // Maps "/" to Hello handler
 
 	// Define the custom HTTP server configuration
 	serverAddr := fmt.Sprintf(":%d", cfg.ServerConfig.Port)
 	s := &http.Server{
 		Addr:         serverAddr,        // Server will listen on configured port
-		Handler:      sm,                // Use our custom router
+		Handler:      ch(sm),            // Use our custom router, wrapped CORS middleware
 		IdleTimeout:  120 * time.Second, // Max idle time before disconnect
 		ReadTimeout:  1 * time.Second,   // Max time to read a request
 		WriteTimeout: 1 * time.Second,   // Max time to write a response
