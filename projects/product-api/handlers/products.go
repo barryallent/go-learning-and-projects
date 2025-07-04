@@ -1,22 +1,8 @@
-// Package classification of Products API
-//
-// Documentation for Products API
-//
-// Schemes: http
-// BasePath: /
-// Version: 1.0.0
-//
-// Consumes:
-// - application/json
-//
-// Produces:
-// - application/json
-// swagger:meta
-
 package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -53,6 +39,9 @@ func (p *ProductsHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set proper Content-Type header for JSON response
+	w.Header().Set("Content-Type", "application/json")
+
 	// call the ToJSON method on Products to convert it to JSON
 	err = Products.ToJSON(w)
 	if err != nil {
@@ -85,6 +74,17 @@ func (p *ProductsHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Error(w, fmt.Sprintf("Unable to add product: %v", err), http.StatusInternalServerError)
 		return
+	}
+
+	// Set proper Content-Type header and status for JSON response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	// Return the created product as JSON using json.NewEncoder
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(product)
+	if err != nil {
+		http.Error(w, "Unable to marshal json", http.StatusInternalServerError)
 	}
 }
 
@@ -131,6 +131,16 @@ func (p *ProductsHandler) UpdateProducts(w http.ResponseWriter, r *http.Request)
 		}
 		http.Error(w, fmt.Sprintf("Unable to update product: %v", err), http.StatusInternalServerError)
 		return
+	}
+
+	// Set proper Content-Type header for JSON response
+	w.Header().Set("Content-Type", "application/json")
+
+	// Return the updated product as JSON
+	encoder := json.NewEncoder(w)
+	err = encoder.Encode(product)
+	if err != nil {
+		http.Error(w, "Unable to marshal json", http.StatusInternalServerError)
 	}
 }
 
