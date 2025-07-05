@@ -8,9 +8,10 @@ import (
 	"os"
 	"os/signal"
 	"product-api/config"
-	"product-api/data"
 	"product-api/database"
-	"product-api/handlers"
+	"product-api/internal/handlers"
+	"product-api/internal/repository"
+	"product-api/internal/service"
 	"time"
 
 	gohandlers "github.com/gorilla/handlers"
@@ -48,11 +49,15 @@ func main() {
 		l.Fatal("Failed to create tables: ", err)
 	}
 
-	// Initialize the product repository
-	data.InitializeRepository(db.DB)
+	// Initialize the dependencies using dependency injection (enterprise pattern)
+	// Repository layer - handles database operations
+	productRepo := repository.NewProductRepository(db.DB)
 
-	// Initialize handler instances with the logger
-	ph := handlers.NewProductsHandler(l)
+	// Service layer - handles business logic
+	productService := service.NewProductService(productRepo)
+
+	// Handler layer - handles HTTP requests
+	ph := handlers.NewProductsHandler(l, productService)
 
 	// using gorilla/mux for routing, its a powerful HTTP router and URL matcher for building Go web servers
 	sm := mux.NewRouter()
@@ -67,10 +72,12 @@ func main() {
 
 	putRouter := sm.Methods(http.MethodPut).Subrouter()
 	putRouter.HandleFunc("/product/{id:[0-9]+}", ph.UpdateProducts)
+	//using middleware to validate the product before updating
 	putRouter.Use(ph.MiddlewareProductValidation)
 
 	postRouter := sm.Methods("POST").Subrouter()
 	postRouter.HandleFunc("/product", ph.AddProduct)
+	//using middleware to validate the product before adding
 	postRouter.Use(ph.MiddlewareProductValidation)
 
 	// Swagger documentation
@@ -87,8 +94,6 @@ func main() {
 		//allowed 2 headers for requests
 		gohandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
 	)
-
-	//sm.Handle("/", hh) // Maps "/" to Hello handler
 
 	// Define the custom HTTP server configuration
 	serverAddr := fmt.Sprintf(":%d", cfg.ServerConfig.Port)
