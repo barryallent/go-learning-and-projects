@@ -31,7 +31,7 @@ definitions:
         required:
             - id
         type: object
-        x-go-package: product-api-backend/models
+        x-go-package: product-api/models
 info:
     contact:
         email: team@productapi.com

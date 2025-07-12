@@ -22,7 +22,7 @@ import (
 
 func main() {
 	// Create a logger that writes to stdout with a prefix and timestamp
-	l := log.New(os.Stdout, "product-api-backend ", log.LstdFlags)
+	l := log.New(os.Stdout, "product-api ", log.LstdFlags)
 
 	// Load configuration
 	cfg := config.LoadConfig()

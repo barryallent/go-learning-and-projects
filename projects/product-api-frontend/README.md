@@ -117,10 +117,10 @@ npm run eject   # Eject from Create React App
 
 1. **Start both servers:**
    ```bash
-   # Backend (from product-api-backend directory)
+   # Backend (from product-api directory)
    make dev
    
-   # Frontend (from product-api-backend-frontend directory)
+   # Frontend (from product-api-frontend directory)
    npm start
    ```
 
