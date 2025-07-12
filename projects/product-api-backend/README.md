@@ -281,7 +281,7 @@ curl -X POST http://localhost:9080/product \
 
 ```bash
 # 1. Initialize new Go module
-go mod init product-api
+go mod init product-api-backend
 
 # 2. Add dependencies 
 go get github.com/gorilla/mux
@@ -381,7 +381,7 @@ make clean              # Clean generated files
 make clean-client       # Clean client files
 
 # 6. Client Integration
-cd ../client-product-api
+cd ../client-product-api-backend-backend
 go run example.go       # Test generated client
 ```
 
