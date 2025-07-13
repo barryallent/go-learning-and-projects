@@ -58,6 +58,7 @@ func (p *ProductsHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 //  500: errorResponse
 
 // AddProduct adds a new product to the database
+// passing ProductsHandler as receiver so that we can call this method on ProductsHandler type
 func (p *ProductsHandler) AddProduct(w http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle POST Products")
 
