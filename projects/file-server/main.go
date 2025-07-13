@@ -10,6 +10,8 @@ import (
 	"os/signal"
 	"time"
 
+	gohandlers "github.com/gorilla/handlers"
+
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/go-hclog"
 )
@@ -64,10 +66,33 @@ func main() {
 		http.StripPrefix("/images/", http.FileServer(http.Dir(basePath))),
 	)
 
+	// Health check endpoint
+	sm.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status": "healthy", "service": "file-server"}`))
+	}).Methods(http.MethodGet)
+
+	// List all files endpoint
+	sm.HandleFunc("/files", fh.ListFiles).Methods(http.MethodGet)
+
+	// Delete file endpoint
+	dh := sm.Methods(http.MethodDelete).Subrouter()
+	dh.HandleFunc("/images/{id:[0-9]+}/{filename}", fh.DeleteFile)
+
+	//CORS middleware to allow cross-origin requests from browsers
+	ch := gohandlers.CORS(
+		// allow all origins, methods, and headers
+		gohandlers.AllowedOrigins([]string{"*"}),
+		gohandlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
+		//allowed 2 headers for requests
+		gohandlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),
+	)
+
 	// create a new server
 	s := http.Server{
 		Addr:         bindAddress,       // configure the bind address
-		Handler:      sm,                // set the default handler
+		Handler:      ch(sm),            // set the default handler
 		ErrorLog:     sl,                // the logger for the server
 		ReadTimeout:  5 * time.Second,   // max time to read request from the client
 		WriteTimeout: 10 * time.Second,  // max time to write response to the client

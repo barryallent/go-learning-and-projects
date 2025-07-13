@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/xerrors"
 )
@@ -82,6 +83,73 @@ func (l *LocalStorage) Get(path string) (*os.File, error) {
 	}
 
 	return f, nil
+}
+
+// ListFiles returns a list of all files in the storage
+func (l *LocalStorage) ListFiles() ([]FileInfo, error) {
+	var files []FileInfo
+
+	// Walk through all directories and files
+	err := filepath.Walk(l.basePath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip directories, only process files
+		if !info.IsDir() {
+			// Get relative path from basePath
+			relativePath, err := filepath.Rel(l.basePath, path)
+			if err != nil {
+				return err
+			}
+
+			// Split the path to get ID and filename
+			// Expected format: {id}/{filename}
+			parts := strings.Split(relativePath, string(filepath.Separator))
+			if len(parts) >= 2 {
+				id := parts[0]
+				filename := filepath.Base(relativePath)
+
+				files = append(files, FileInfo{
+					ID:       id,
+					Filename: filename,
+					Size:     info.Size(),
+					Path:     relativePath,
+				})
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, xerrors.Errorf("Unable to list files: %w", err)
+	}
+
+	return files, nil
+}
+
+// DeleteFile deletes a file at the given path
+func (l *LocalStorage) DeleteFile(path string) error {
+	// get the full path for the file
+	fp := l.fullPath(path)
+
+	// check if file exists
+	_, err := os.Stat(fp)
+	if os.IsNotExist(err) {
+		return xerrors.Errorf("File not found: %s", path)
+	}
+	if err != nil {
+		return xerrors.Errorf("Unable to get file info: %w", err)
+	}
+
+	// delete the file
+	err = os.Remove(fp)
+	if err != nil {
+		return xerrors.Errorf("Unable to delete file: %w", err)
+	}
+
+	return nil
 }
 
 // returns the absolute path

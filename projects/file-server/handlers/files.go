@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"path/filepath"
 
 	"file-server/files"
+
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/go-hclog"
 )
@@ -32,6 +34,58 @@ func (f *Files) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// here unless they have the correct parameters
 
 	f.saveFile(id, fn, rw, r)
+}
+
+// ListFiles returns a list of all files in the storage
+func (f *Files) ListFiles(rw http.ResponseWriter, r *http.Request) {
+	f.log.Info("Handle GET /files - listing all files")
+
+	files, err := f.store.ListFiles()
+	if err != nil {
+		f.log.Error("Unable to list files", "error", err)
+		http.Error(rw, "Unable to list files", http.StatusInternalServerError)
+		return
+	}
+
+	// Set content type to JSON
+	rw.Header().Set("Content-Type", "application/json")
+
+	// Encode and send the response
+	err = json.NewEncoder(rw).Encode(files)
+	if err != nil {
+		f.log.Error("Unable to encode response", "error", err)
+		http.Error(rw, "Unable to encode response", http.StatusInternalServerError)
+		return
+	}
+}
+
+// DeleteFile deletes a file from storage
+func (f *Files) DeleteFile(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	fn := vars["filename"]
+
+	f.log.Info("Handle DELETE", "id", id, "filename", fn)
+
+	// Construct the file path
+	filePath := filepath.Join(id, fn)
+
+	// Delete the file
+	err := f.store.DeleteFile(filePath)
+	if err != nil {
+		f.log.Error("Unable to delete file", "error", err)
+		http.Error(rw, "Unable to delete file", http.StatusInternalServerError)
+		return
+	}
+
+	// Return success response
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusOK)
+	json.NewEncoder(rw).Encode(map[string]string{
+		"message":  "File deleted successfully",
+		"id":       id,
+		"filename": fn,
+	})
 }
 
 // saveFile saves the contents of the request to a file
